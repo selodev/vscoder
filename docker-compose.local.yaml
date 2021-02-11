@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  # MKCert
+  mkcert:
+    build:
+        context: ./mkcert
+        dockerfile: Dockerfile
+    image: mkcert:local
+    container_name: coder-mkcert
+    #env_file: .env
+    environment:
+      DOMAINS: ${CERT_DOMAINS}
+    volumes:
+      - ./mkcert/certs:/root/.local/share/mkcert
+  # Coder Server
+  coder:
+    build:
+      context: ./coder
+      dockerfile: Dockerfile
+    image: coder:local
+    container_name: coder
+    #network_mode: host
+    ports:
+      - 80:80
+    #environment:
+      #DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+    user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+    environment:
+      NODE_EXTRA_CA_CERTS: '/root/.local/share/code-server/certs/rootCA.pem'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      #- ./.config:/root/.config
+      - ./data/extensions:/root/.local/share/code-server/extensions
+      - ./data/settings.json:/root/.local/share/code-server/User/settings.json
+      - ./mkcert/certs:/root/.local/share/code-server/certs
+      - ../:/home/coder/project
+    command: [
+      '--auth', 'none', 
+      '--bind-addr', '0.0.0.0:80', 
+      '--cert', '/root/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
+      '--cert-key', '/root/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
+    ]
+
+networks:
+  coder_network:
+    driver: bridge
+    name: coder_network

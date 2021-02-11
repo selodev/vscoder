@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  # Coder
+  coder:
+    build:
+      context: ./coder
+      dockerfile: Dockerfile
+    image: coder:local
+    container_name: coder
+    #network_mode: host
+    #environment:
+      #DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+    user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    #- ./.config:/root/.config
+    - ./data/extensions:/root/.local/share/code-server/extensions
+    - ./data/settings.json:/root/.local/share/code-server/User/settings.json
+    - ../projects:/home/coder/projects
+    command: ['--auth', 'password']
+  certbot:
+    container_name: coder-certbot
+    image: certbot/certbot
+    volumes:
+      - ./certbot/letsencrypt:/etc/letsencrypt
+    user: ${CURRENT_UID}
+    restart: unless-stopped
+    # This will check if your certificate is up for renewal every 12 hours and renew it if necessary as recommended by Let’s Encrypt.
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;" # 💡
+  #Nginx
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: nginx:local
+    container_name: coder-nginx
+    #env_file: .env
+    environment:
+      NGINX_HOST: ${DOMAIN_NAME}
+#    network_mode: host
+    ports:
+      - 80:80
+      - 443:443
+    #extra_hosts:
+     # - "gateway.docker.internal:host-gateway"
+    volumes: # 💡
+      # By default the nginx entrypoint replaces all variables found in /etc/nginx/templates/*.template with their respective values using envsubst. The results of this substitution are written to /etc/nginx/conf.d.
+      - ./nginx/templates/default.conf.template:/etc/nginx/templates/default.conf.template #⚠️
+      - ./certbot/letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+    #user: ${CURRENT_UID}
+
+networks:
+  coder_network:
+    driver: bridge
+    name: coder_network
