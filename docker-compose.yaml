@@ -52,6 +52,6 @@ services:
     #user: ${CURRENT_UID}
 
 networks:
-  coder_network:
+  vscoder_network:
     driver: bridge
-    name: coder_network
+    name: vscoder_network
