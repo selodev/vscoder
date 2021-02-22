@@ -18,10 +18,14 @@ COPY --from=docker/compose:debian-1.28.2 /usr/local/bin/docker-compose /usr/loca
 #RUN set ex; chmod +x /usr/local/bin/coder-docker-entrypoint.sh
 
 #RUN set ex; mv /usr/local/bin/coder-docker-entrypoint.sh /usr/local/bin
+
+# Allows code-server to listen on port 443.
+RUN sudo setcap cap_net_bind_service=+ep /usr/lib/code-server/lib/node
+
 USER coder
 
 
-#EXPOSE 8080
+EXPOSE 8080 80 443
 
 # start the app
 #ENTRYPOINT ["coder-docker-entrypoint.sh"]

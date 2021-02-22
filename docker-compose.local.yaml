@@ -23,6 +23,7 @@ services:
     #network_mode: host
     ports:
       - 80:80
+      - 443:443
     #environment:
       #DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
     user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
@@ -37,11 +38,12 @@ services:
       - ../:/home/coder/project
     command: [
       '--auth', 'none', 
-      '--bind-addr', '0.0.0.0:80', 
+      '--bind-addr', '0.0.0.0:443', 
       '--cert', '/root/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
       '--cert-key', '/root/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
     ]
-
+    depends_on:
+      - mkcert
 networks:
   coder_network:
     driver: bridge
