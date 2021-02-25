@@ -25,22 +25,21 @@ services:
       - 80:80
       - 443:443
     environment:
-      DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+      DOCKER_USER: ${USER} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+      NODE_EXTRA_CA_CERTS: '/home/coder/.local/share/code-server/certs/rootCA.pem'
     user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
-    environment:
-      NODE_EXTRA_CA_CERTS: '$HOME/.local/share/code-server/certs/rootCA.pem'
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:rw
       #- ./.config:/root/.config
-      - ./data/extensions:${HOME}/.local/share/code-server/extensions
-      - ./data/settings.json:$HOME/.local/share/code-server/User/settings.json
-      - ./mkcert/certs:$HOME/.local/share/code-server/certs
-      - ../projects:$HOME/projects
+      - ./data/extensions:/home/coder/.local/share/code-server/extensions
+      - ./data/settings.json:/home/coder/.local/share/code-server/User/settings.json
+      - ./mkcert/certs:/home/coder/.local/share/code-server/certs
+      - ../projects:/home/coder/projects
     command: [
       '--auth', 'none', 
       '--bind-addr', '0.0.0.0:443', 
-      '--cert', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
-      '--cert-key', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
+      '--cert', '/home/coder/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
+      '--cert-key', '/home/coder/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
     ]
     depends_on:
       - mkcert

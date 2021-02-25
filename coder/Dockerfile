@@ -26,10 +26,9 @@ curl \
 dumb-init \ 
 git \ 
     openssh-client \
+procps \
     && rm -rf /var/lib/apt/lists/*
 
-
-#    procps \
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
@@ -55,19 +54,18 @@ RUN set -eux; \
 	echo 'dockremap:165536:65536' >> /etc/subuid; \
 	echo 'dockremap:165536:65536' >> /etc/subgid
 
-RUN sudo adduser --gecos '' --disabled-password coder
+RUN sudo adduser --gecos '' --disabled-password coder && \
+    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
 RUN cat /etc/subgid
 
-# This way, if someone sets $DOCKER_USER, docker-exec will still work as
-# the uid will remain the same. note: only relevant if -u isn't passed to
-# docker-run.
 USER coder
-#1000
 ENV USER=coder
-WORKDIR /home/$USER
+WORKDIR /home/coder
+#RUN sudo chown -R $USER /var/run/docker.sock
+
 RUN mkdir projects
 RUN id -u
 RUN whoami
@@ -77,9 +75,9 @@ RUN cat /etc/subgid
 RUN curl -fsSL https://get.docker.com/rootless | sh && \
     echo "export PATH=/home/coder/bin:/sbin:/usr/sbin:$PATH" >> ~/.bashrc && \
     echo "dockerd-rootless.sh" >> ~/.bashrc && \
-    echo "export XDG_RUNTIME_DIR=/home/$USER/.docker/run" >> ~/.bashrc && \
-    echo "export PATH=/home/$USER/bin:$PATH" >> ~/.bashrc  && \
-    echo "export DOCKER_HOST=unix:///home/$USER/.docker/run/docker.sock" >> ~/.bashrc
+    echo "export XDG_RUNTIME_DIR=/home/coder/.docker/run" >> ~/.bashrc && \
+    echo "export PATH=/home/coder/bin:$PATH" >> ~/.bashrc  && \
+    echo "export DOCKER_HOST=unix:///home/coder/.docker/run/docker.sock" >> ~/.bashrc
 
 #USER root
 RUN curl -L "https://github.com/docker/compose/releases/download/1.28.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/bin/docker-compose && \
@@ -104,12 +102,13 @@ RUN  echo "**** install code-server ****" && \
       export PATH="~/.local/bin:$PATH"
 
 
-RUN mkdir -p /home/$USER/.config
-RUN mkdir -p /home/$USER/.local/share/code-server
+RUN mkdir -p /home/coder/.config
+RUN mkdir -p /home/coder/.local/share/code-server
+RUN chown -R coder /home/coder
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/home/$USER/.local" ]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/home/coder/.local" ]
 
 CMD [ "--auth", "none" ]
 #CMD [ "sleep", "infinity" ]

@@ -39,7 +39,7 @@ if [ "${DOCKER_USER-}" ] && [ "$DOCKER_USER" != "$USER" ]; then
   sudo groupmod -n "$DOCKER_USER" coder
 
   USER="$DOCKER_USER"
-
+  echo "$DOCKER_USER" 'docker user'
   sudo sed -i "/coder/d" /etc/sudoers.d/nopasswd
 fi
 
