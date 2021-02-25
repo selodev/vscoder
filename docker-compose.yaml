@@ -9,8 +9,8 @@ services:
     image: coder:local
     container_name: coder
     #network_mode: host
-    #environment:
-      #DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+    environment:
+      DOCKER_USER: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
     user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
