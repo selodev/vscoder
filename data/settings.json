@@ -1,4 +1,5 @@
 {
     "terminal.integrated.shell.linux": "/bin/bash",
-    "workbench.colorTheme": "One Dark Pro"
+    "workbench.colorTheme": "One Dark Pro",
+    "docker.host": "unix:///var/run/docker.sock"
 }

@@ -2,7 +2,9 @@ FROM ubuntu:focal
 
 USER root
 #ENV SKIP_IPTABLES true
-
+ARG DOCKER_USER
+ARG U_UID
+ARG U_GID
 #ENV TZ=Asia/Ho_Chi_Minh
 #RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # https://github.com/docker/docker/blob/master/project/PACKAGERS.md#runtime-dependencies
@@ -41,12 +43,6 @@ RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* 
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG en_US.utf8
 
-RUN ARCH="$(dpkg --print-architecture)" && \
-    curl -fsSL "https://github.com/boxboat/fixuid/releases/download/v0.4.1/fixuid-0.4.1-linux-$ARCH.tar.gz" | tar -C /usr/local/bin -xzf - && \
-    chown root:root /usr/local/bin/fixuid && \
-    chmod 4755 /usr/local/bin/fixuid && \
-    mkdir -p /etc/fixuid && \
-    printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
 RUN set -eux; \
 	addgroup --system dockremap; \
@@ -54,17 +50,18 @@ RUN set -eux; \
 	echo 'dockremap:165536:65536' >> /etc/subuid; \
 	echo 'dockremap:165536:65536' >> /etc/subgid
 
-RUN sudo adduser --gecos '' --disabled-password coder && \
-    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+RUN sudo addgroup --gid ${U_GID} ${DOCKER_USER}
+RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER}
+#    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
 RUN cat /etc/subgid
 
-USER coder
-ENV USER=coder
-WORKDIR /home/coder
-#RUN sudo chown -R $USER /var/run/docker.sock
+USER ${DOCKER_USER}
+#ENV USER=coder
+WORKDIR /home/${DOCKER_USER}
+#RUN sudo chmod 666 /var/run/docker.sock
 
 RUN mkdir projects
 RUN id -u
@@ -73,11 +70,11 @@ RUN cat /etc/subuid
 RUN cat /etc/subgid
 
 RUN curl -fsSL https://get.docker.com/rootless | sh && \
-    echo "export PATH=/home/coder/bin:/sbin:/usr/sbin:$PATH" >> ~/.bashrc && \
-    echo "dockerd-rootless.sh" >> ~/.bashrc && \
-    echo "export XDG_RUNTIME_DIR=/home/coder/.docker/run" >> ~/.bashrc && \
-    echo "export PATH=/home/coder/bin:$PATH" >> ~/.bashrc  && \
-    echo "export DOCKER_HOST=unix:///home/coder/.docker/run/docker.sock" >> ~/.bashrc
+    echo "export PATH=/home/${DOCKER_USER}/bin:/sbin:/usr/sbin:$PATH" >> ~/.bashrc && \
+    echo "dockerd-rootless.sh --userns-remap=${DOCKER_USER}" >> ~/.bashrc && \
+    echo "export XDG_RUNTIME_DIR=/home/${DOCKER_USER}/.docker/run" >> ~/.bashrc && \
+    echo "export PATH=/home/${DOCKER_USER}/bin:$PATH" >> ~/.bashrc  && \
+    echo "export DOCKER_HOST=unix:///home/${DOCKER_USER}/.docker/run/docker.sock" >> ~/.bashrc
 
 #USER root
 RUN curl -L "https://github.com/docker/compose/releases/download/1.28.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/bin/docker-compose && \
@@ -102,13 +99,13 @@ RUN  echo "**** install code-server ****" && \
       export PATH="~/.local/bin:$PATH"
 
 
-RUN mkdir -p /home/coder/.config
-RUN mkdir -p /home/coder/.local/share/code-server
-RUN chown -R coder /home/coder
+RUN mkdir -p /home/${DOCKER_USER}/.config
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/User/globalStorage
+RUN chown -R $DOCKER_USER /home/$DOCKER_USER
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "--user-data-dir", "/home/coder/.local" ]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080" ]
 
 CMD [ "--auth", "none" ]
 #CMD [ "sleep", "infinity" ]
