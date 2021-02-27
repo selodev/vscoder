@@ -1,0 +1,18 @@
+
+
+version: '3.9'
+
+services:
+  # MKCert
+  mkcert:
+    build:
+        context: .
+        dockerfile: Dockerfile          
+    image: mkcert:local
+    container_name: coder-mkcert
+    env_file: .env
+    environment:
+      DOMAINS: ${CERT_DOMAINS}
+      user: ${CURRENT_UID}
+    volumes:
+      - ./mkcert/certs:/root/.local/share/mkcert

@@ -15,5 +15,5 @@ COPY docker-entrypoint.sh /usr/local/go/bin/
 RUN set -ex; chmod +x /usr/local/go/bin/docker-entrypoint.sh
 
 # start the app
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT [ "docker-entrypoint.sh" ]
    

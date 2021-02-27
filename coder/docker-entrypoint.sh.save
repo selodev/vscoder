@@ -12,7 +12,7 @@ set -ea
 #export DOCKER_HOST=unix:///home/${DOCKER_USER}/.docker/run/docker.sock
 
 
-export PATH=/home/${USER}/bin:/sbin:/usr/sbin:$PATH
+export PATH=/home/${DOCKER_USER}/bin:/sbin:/usr/sbin:$PATH
 
 
 
@@ -33,4 +33,4 @@ PATH=/home/${USER}/bin:/sbin:/usr/sbin:$PATH
 
 
 #dumb-init
-$HOME/.local/bin/code-server "$@"
+/home/${USER}/.local/bin/code-server "$@"

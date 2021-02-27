@@ -2,6 +2,7 @@ FROM ubuntu:focal
 
 USER root
 #ENV SKIP_IPTABLES true
+#ENV DOCKER_USER dockremap
 ARG DOCKER_USER
 ARG U_UID
 ARG U_GID
@@ -36,23 +37,24 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN echo "kernel.unprivileged_userns_clone=1" >> /etc/sysctl.conf && \
-    echo 'user.max_user_namespaces=28633' >> /etc/sysctl.conf
-   #echo "options overlay permit_mounts_in_userns=1" >> /etc/modprobe.d/rootless.conf && \
+    echo 'user.max_user_namespaces=28633' >> /etc/sysctl.conf && \
+   echo "options overlay permit_mounts_in_userns=1" >> /etc/modprobe.d/rootless.conf
 
 RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG en_US.utf8
 
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
-RUN set -eux; \
-	addgroup --system dockremap; \
-	adduser --system --ingroup dockremap dockremap; \
-	echo 'dockremap:165536:65536' >> /etc/subuid; \
-	echo 'dockremap:165536:65536' >> /etc/subgid
+#RUN set -eux; \
+#	addgroup --system dockremap; \
+#	adduser --system --ingroup dockremap dockremap; \
+#	echo 'dockremap:165536:65536' >> /etc/subuid; \
+#	echo 'dockremap:165536:65536' >> /etc/subgid
 
 RUN sudo addgroup --gid ${U_GID} ${DOCKER_USER}
-RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER}
-#    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER} && \
+    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
@@ -63,7 +65,8 @@ USER ${DOCKER_USER}
 WORKDIR /home/${DOCKER_USER}
 #RUN sudo chmod 666 /var/run/docker.sock
 
-RUN mkdir projects
+
+#RUN mkdir projects
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
@@ -71,7 +74,7 @@ RUN cat /etc/subgid
 
 RUN curl -fsSL https://get.docker.com/rootless | sh && \
     echo "export PATH=/home/${DOCKER_USER}/bin:/sbin:/usr/sbin:$PATH" >> ~/.bashrc && \
-    echo "dockerd-rootless.sh --userns-remap=${DOCKER_USER}" >> ~/.bashrc && \
+    #echo "dockerd-rootless.sh --userns-remap=${DOCKER_USER}" >> ~/.bashrc && \
     echo "export XDG_RUNTIME_DIR=/home/${DOCKER_USER}/.docker/run" >> ~/.bashrc && \
     echo "export PATH=/home/${DOCKER_USER}/bin:$PATH" >> ~/.bashrc  && \
     echo "export DOCKER_HOST=unix:///home/${DOCKER_USER}/.docker/run/docker.sock" >> ~/.bashrc
@@ -93,19 +96,23 @@ RUN  echo "**** install code-server ****" && \
       CODE_VERSION=$(echo "$CODE_RELEASE" | awk '{print substr($1,2); }') && \
       mkdir -p ~/.local/lib ~/.local/bin && \
       curl -fL https://github.com/cdr/code-server/releases/download/v"$CODE_VERSION"/code-server-"$CODE_VERSION"-linux-amd64.tar.gz \
-      | tar -C ~/.local/lib -xz &&\
-      mv ~/.local/lib/code-server-"$CODE_VERSION"-linux-amd64 ~/.local/lib/code-server-"$CODE_VERSION" &&\
+      | tar -C ~/.local/lib -xz && \
+      mv ~/.local/lib/code-server-"$CODE_VERSION"-linux-amd64 ~/.local/lib/code-server-"$CODE_VERSION" && \
       ln -s ~/.local/lib/code-server-"$CODE_VERSION"/bin/code-server ~/.local/bin/code-server && \
       export PATH="~/.local/bin:$PATH"
 
-
 RUN mkdir -p /home/${DOCKER_USER}/.config
 RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/User/globalStorage
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/certs
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/extensions
 RUN chown -R $DOCKER_USER /home/$DOCKER_USER
+
+# Allows code-server to listen on port 443.
+#RUN sudo setcap cap_net_bind_service=+ep /home/$DOCKER_USER/.local/lib/code-server/lib/node
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080" ]
+ENTRYPOINT [ "/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080" ]
 
 CMD [ "--auth", "none" ]
 #CMD [ "sleep", "infinity" ]
