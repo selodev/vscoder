@@ -1,2 +1,4 @@
 CURRENT_UID=$(id -u):$(id -g) \
-docker-compose up
+U_UID=$(id -u) \
+U_GID=$(id -g) \
+docker-compose up "$@"

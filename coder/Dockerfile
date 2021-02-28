@@ -1,6 +1,6 @@
 FROM ubuntu:focal
 
-USER root
+#USER root
 #ENV SKIP_IPTABLES true
 #ENV DOCKER_USER dockremap
 ARG DOCKER_USER
@@ -32,7 +32,7 @@ git \
 procps \
     && rm -rf /var/lib/apt/lists/*
 
-
+RUN echo whoami $(id -u) $(id -g)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
@@ -52,9 +52,9 @@ ENV LANG en_US.utf8
 #	echo 'dockremap:165536:65536' >> /etc/subgid
 
 RUN sudo addgroup --gid ${U_GID} ${DOCKER_USER}
-RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER} && \
-    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
-
+RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER}
+#    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
+#RUN sudo adduser --gecos '' --disabled-password coder
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
