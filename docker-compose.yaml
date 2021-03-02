@@ -13,7 +13,7 @@ services:
       DOMAINS: ${CERT_DOMAINS}
       user: ${CURRENT_UID}
     volumes:
-      - ./mkcert/certs:/root/.local/share/mkcert
+      - certs:/root/.local/share/mkcert
   # Coder Server
   coder:
     build:
@@ -33,20 +33,20 @@ services:
     ports:
       - 8080:8080
       #- 443:443
+    tty: true
     environment:
-#     U_UID: ${U_UID}
-#     U_GID: ${U_GID}
+     U_UID: ${U_UID}
+     U_GID: ${U_GID}
 #     DOCKER_USER: coder  
-#     DOCKER_USER: ${USER} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+     DOCKER_USER: ${USER} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
      NODE_EXTRA_CA_CERTS: $HOME/.local/share/code-server/certs/rootCA.pem
 #    user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
     volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock
       #- ./.config:/root/.config
-      - ./data/extensions:$HOME/.local/share/code-server/extensions
-      - ./data/settings.json:$HOME/.local/share/code-server/User/settings.json
-      - ./mkcert/certs:$HOME/.local/share/code-server/certs
-      - ../projects:$HOME/projects
+      - data:$HOME/.local/share/code-server
+      - certs:$HOME/.local/share/code-server/certs
+      - projects:$HOME/projects
     command: [
       '--auth', 'none', 
       '--bind-addr', '0.0.0.0:8080', 
@@ -55,7 +55,13 @@ services:
     ]
     depends_on:
       - mkcert
+
 networks:
   coder_network:
     driver: bridge
     name: coder_network
+
+volumes:
+  certs:
+  projects:
+  data:
