@@ -112,8 +112,8 @@ RUN  echo "**** install code-server ****" && \
       | tar -C ~/.local/lib -xz && \
       mv ~/.local/lib/code-server-"$CODE_VERSION"-linux-amd64 ~/.local/lib/code-server-"$CODE_VERSION" && \
       ln -s ~/.local/lib/code-server-"$CODE_VERSION"/bin/code-server ~/.local/bin/code-server && \
-      echo "export PATH=~/.local/bin:$PATH" >> ~/.bashrc
-#      echo "code-server --auth none --bind-addr 0.0.0.0:8080" >> ~/.bashrc
+      echo "export PATH=~/.local/bin:$PATH" >> ~/.bashrc && \
+      echo "code-server --auth none --bind-addr 0.0.0.0:8080" >> ~/.bashrc
 
 RUN mkdir -p /home/${DOCKER_USER}/.config
 RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/User/globalStorage
@@ -125,5 +125,5 @@ RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/extensions
 #RUN sudo setcap cap_net_bind_service=+ep /home/$DOCKER_USER/.local/lib/code-server/lib/node
 
 EXPOSE 8080
-ENTRYPOINT [ "/home/coder/.local/bin/code-server" ]
-#CMD [ "/bin/bash" ]
+#ENTRYPOINT [ "/home/coder/.local/bin/code-server" ]
+CMD [ "/bin/bash" ]

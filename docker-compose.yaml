@@ -48,12 +48,12 @@ services:
       - ./data:$HOME/.local/share/code-server
       - ./certs:$HOME/.local/share/code-server/certs
       - ./projects:$HOME/projects
-    command: [
-      '--auth', 'none', 
-      '--bind-addr', '0.0.0.0:8080', 
-      '--cert', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
-      '--cert-key', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
-    ]
+#    command: [
+#      '--auth', 'none', 
+#      '--bind-addr', '0.0.0.0:8080', 
+#      '--cert', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}.pem', 
+#      '--cert-key', '$HOME/.local/share/code-server/certs/${DOMAIN_NAME}-key.pem'
+#    ]
     depends_on:
       - mkcert
 
