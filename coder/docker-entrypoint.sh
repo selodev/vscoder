@@ -31,7 +31,7 @@ if [ "${DOCKER_USER-}" ] && [ "$DOCKER_USER" != "$USER" ]; then
 
   USER="$DOCKER_USER"
 
-  sudo sed -i "/${DOCKER_USER}/d" /etc/sudoers.d/nopasswd
+  sudo sed -i "/coder/d" /etc/sudoers.d/nopasswd
 fi
 #dumb-init dockerd-rootless.sh
 
@@ -46,5 +46,4 @@ fi
 #dumb-init code-server
 
 
-#dumb-init
-$HOME/.local/bin/code-server "$@"
+dumb-init $HOME/.local/bin/code-server "$@"

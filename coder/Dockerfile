@@ -45,13 +45,15 @@ RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* 
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG en_US.utf8
 
+RUN sudo adduser --gecos '' --disabled-password coder
 
-RUN ARCH="$(dpkg --print-architecture)" && \
-    curl -fsSL "https://github.com/boxboat/fixuid/releases/download/v0.4.1/fixuid-0.4.1-linux-$ARCH.tar.gz" | tar -C /usr/local/bin -xzf - && \
-    chown root:root /usr/local/bin/fixuid && \
-    chmod 4755 /usr/local/bin/fixuid && \
-    mkdir -p /etc/fixuid && \
-    printf "user: ${DOCKER_USER}\ngroup: ${DOCKER_USER}\n" > /etc/fixuid/config.yml
+
+#RUN ARCH="$(dpkg --print-architecture)" && \
+#    curl -fsSL "https://github.com/boxboat/fixuid/releases/download/v0.4.1/fixuid-0.4.1-linux-$ARCH.tar.gz" | tar -C /usr/local/bin -xzf - && \
+#    chown root:root /usr/local/bin/fixuid && \
+#    chmod 4755 /usr/local/bin/fixuid && \
+#    mkdir -p /etc/fixuid && \
+#    printf "user: ${DOCKER_USER}\ngroup: ${DOCKER_USER}\n" > /etc/fixuid/config.yml
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
 #RUN set -eux; \
 #	addgroup --system dockremap; \
@@ -59,10 +61,9 @@ RUN ARCH="$(dpkg --print-architecture)" && \
 #	echo 'dockremap:165536:65536' >> /etc/subuid; \
 #	echo 'dockremap:165536:65536' >> /etc/subgid
 
-RUN sudo addgroup --gid ${U_GID} ${DOCKER_USER}
-RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER}
+#RUN sudo addgroup --gid ${U_GID} ${DOCKER_USER}
+#RUN sudo adduser --gecos '' --disabled-password --gid ${U_GID} --uid ${U_UID} ${DOCKER_USER} && \
 #    echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
-#RUN sudo adduser --gecos '' --disabled-password coder
 RUN id -u
 RUN whoami
 RUN cat /etc/subuid
@@ -114,14 +115,15 @@ RUN  echo "**** install code-server ****" && \
       echo "export PATH=~/.local/bin:$PATH" >> ~/.bashrc
 #      echo "code-server --auth none --bind-addr 0.0.0.0:8080" >> ~/.bashrc
 
-#RUN mkdir -p /home/${DOCKER_USER}/.config
-#RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/User/globalStorage
-#RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/certs
-#RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/extensions
+RUN mkdir -p /home/${DOCKER_USER}/.config
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/User/globalStorage
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/certs
+RUN mkdir -p /home/${DOCKER_USER}/.local/share/code-server/extensions
 #RUN chown -R $DOCKER_USER /home/$DOCKER_USER
 
 # Allows code-server to listen on port 443.
 #RUN sudo setcap cap_net_bind_service=+ep /home/$DOCKER_USER/.local/lib/code-server/lib/node
 
 EXPOSE 8080
-ENTRYPOINT [ "/usr/local/bin/docker-entrypoint.sh", "--bind-addr", "0.0.0.0:8080" ]
+ENTRYPOINT [ "/home/coder/.local/bin/code-server" ]
+#CMD [ "/bin/bash" ]

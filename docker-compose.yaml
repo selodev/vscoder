@@ -13,7 +13,7 @@ services:
       DOMAINS: ${CERT_DOMAINS}
       user: ${CURRENT_UID}
     volumes:
-      - certs:/root/.local/share/mkcert
+      - ./certs:/root/.local/share/mkcert
   # Coder Server
   coder:
     build:
@@ -22,14 +22,15 @@ services:
       args:
         U_UID: ${U_UID}
         U_GID: ${U_GID}
-        DOCKER_USER: ${USER}
+        DOCKER_USER: "coder"
     image: coder:local
     container_name: coder
     #network_mode: host
+#    userns_mode: "host"
 #    privileged: true
-#    security_opt:
-#      - seccomp:unconfined
-#      - apparmor:unconfined
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
     ports:
       - 8080:8080
       #- 443:443
@@ -37,16 +38,16 @@ services:
     environment:
      U_UID: ${U_UID}
      U_GID: ${U_GID}
-#     DOCKER_USER: coder  
-     DOCKER_USER: ${USER} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
+     DOCKER_USER: "coder"
+#     DOCKER_USER: ${USER} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
      NODE_EXTRA_CA_CERTS: $HOME/.local/share/code-server/certs/rootCA.pem
 #    user: ${CURRENT_UID} # Please run as follows CURRENT_UID=$(id -u):$(id -g) docker-compose up
     volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock
       #- ./.config:/root/.config
-      - data:$HOME/.local/share/code-server
-      - certs:$HOME/.local/share/code-server/certs
-      - projects:$HOME/projects
+      - ./data:$HOME/.local/share/code-server
+      - ./certs:$HOME/.local/share/code-server/certs
+      - ./projects:$HOME/projects
     command: [
       '--auth', 'none', 
       '--bind-addr', '0.0.0.0:8080', 
